@@ -389,7 +389,6 @@ body {
     gap: 8px;
 }
 
-
 .loading-spinner {
     display: inline-block;
     width: 16px;
@@ -429,18 +428,48 @@ body {
 }
 
 .diagram-header {
-    background: var(--bg-tertiary);
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-    color: var(--text-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-shrink: 0;
+    padding: 12px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
 }
 
+.diagram-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
+.zoom-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.zoom-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent);
+    transform: scale(1.05);
+}
+
+.zoom-btn:active {
+    transform: scale(0.95);
+}
 
 .input-header {
     background: var(--bg-tertiary);
@@ -493,27 +522,6 @@ body {
 .zoom-controls {
     display: flex;
     gap: 4px;
-}
-
-.zoom-btn {
-    background: var(--bg-primary);
-    border: 1px solid var(--border);
-    color: var(--text-primary);
-    padding: 6px 8px;
-    border-radius: var(--radius);
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.2s;
-    min-width: 32px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.zoom-btn:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--accent);
 }
 
 .control-btn {
@@ -617,7 +625,6 @@ body {
     margin: 8px 0 16px 0;
 }
 
-
 .icon-item:hover {
     background: var(--bg-tertiary);
     border-color: var(--accent);
@@ -653,14 +660,32 @@ body {
 }
 
 .mermaid-output {
-    flex: 1;
     width: 100%;
     height: 100%;
-    padding: 24px;
-    overflow: auto;
-    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
-    transition: background-color 0.2s;
+}
+
+.diagram-viewport {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    position: relative;
+    cursor: grab;
+}
+
+.diagram-viewport:active {
+    cursor: grabbing;
+}
+
+.diagram-content {
+    padding: 20px;
+    transition: transform 0.2s ease;
+    transform-origin: center center;
+    min-width: 100%;
+    min-height: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -670,10 +695,10 @@ body {
     flex: 1;
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
     background: var(--bg-primary);
-    cursor: grab;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
@@ -732,6 +757,7 @@ body {
 .mermaid {
     max-width: 100%;
     height: auto;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* AWS icon styling in diagrams - Remove orange boxes */
@@ -747,11 +773,16 @@ body {
 .mermaid .node .label {
     color: var(--text-primary) !important;
     background: var(--bg-primary) !important;
+    padding: 8px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 /* Fix text visibility in diagrams */
 .mermaid .nodeLabel {
     color: var(--text-primary) !important;
+    font-weight: 500;
+    font-size: 13px;
 }
 
 .mermaid text {
@@ -762,24 +793,51 @@ body {
 .mermaid .cluster-label {
     color: var(--text-primary) !important;
     fill: var(--text-primary) !important;
+    font-weight: 600;
+    font-size: 14px;
 }
 
 .mermaid .cluster rect {
     fill: var(--bg-tertiary);
-    stroke: var(--border);
-    stroke-width: 1px;
+    stroke: var(--accent);
+    stroke-width: 2px;
+    rx: 12px;
+    opacity: 0.3;
     stroke-dasharray: 5,5;
-    opacity: 0.5;
 }
 
+/* Improved connection styling */
 .mermaid .edgePath path {
-    stroke: var(--text-muted) !important;
-    stroke-width: 2px;
+    stroke: var(--accent) !important;
+    stroke-width: 3px !important;
+    fill: none !important;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+.mermaid .arrowheadPath {
+    fill: var(--accent) !important;
+    stroke: var(--accent) !important;
 }
 
 .mermaid .edgeLabel {
     background-color: var(--bg-primary) !important;
     color: var(--text-primary) !important;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+}
+
+/* Node spacing and layout improvements */
+.mermaid .node {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mermaid .node:hover {
+    transform: scale(1.02);
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
 }
 
 /* Floating AI Chat */

@@ -52,11 +52,20 @@
             <div class="diagram-panel">
                 <div class="diagram-header">
                     <span>Diagram Preview</span>
-                    <button id="exitFullscreenBtn" class="exit-fullscreen-btn" style="display: none;">✕</button>
+                    <div class="diagram-controls">
+                        <button id="zoomInBtn" class="zoom-btn" title="Zoom In">+</button>
+                        <button id="zoomOutBtn" class="zoom-btn" title="Zoom Out">−</button>
+                        <button id="zoomResetBtn" class="zoom-btn" title="Reset Zoom">⌂</button>
+                        <button id="exitFullscreenBtn" class="exit-fullscreen-btn" style="display: none;">✕</button>
+                    </div>
                 </div>
                 <div id="diagramContainer" class="diagram-container">
-                    <div id="mermaidOutput" class="mermaid-output">
-                        <div class="loading">Loading diagram...</div>
+                    <div class="diagram-viewport" id="diagramViewport">
+                        <div class="diagram-content" id="diagramContent">
+                            <div id="mermaidOutput" class="mermaid-output">
+                                <div class="loading">Loading diagram...</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -123,6 +132,7 @@
                         <div class="icon-item"><code>{{RDS}}</code> - RDS Database</div>
                         <div class="icon-item"><code>{{DynamoDB}}</code> - DynamoDB</div>
                         <div class="icon-item"><code>{{ElastiCache}}</code> - ElastiCache</div>
+                        <div class="icon-item"><code>{{Aurora}}</code> - Aurora</div>
                     </div>
                     <div class="icon-category">
                         <h4>Networking</h4>
@@ -137,6 +147,27 @@
                         <div class="icon-item"><code>{{IAM}}</code> - IAM</div>
                         <div class="icon-item"><code>{{WAF}}</code> - WAF</div>
                         <div class="icon-item"><code>{{KMS}}</code> - KMS</div>
+                        <div class="icon-item"><code>{{Cognito}}</code> - Cognito</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>Integration</h4>
+                        <div class="icon-item"><code>{{SQS}}</code> - SQS Queue</div>
+                        <div class="icon-item"><code>{{SNS}}</code> - SNS</div>
+                        <div class="icon-item"><code>{{EventBridge}}</code> - EventBridge</div>
+                        <div class="icon-item"><code>{{StepFunctions}}</code> - Step Functions</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>Analytics</h4>
+                        <div class="icon-item"><code>{{Kinesis}}</code> - Kinesis</div>
+                        <div class="icon-item"><code>{{Athena}}</code> - Athena</div>
+                        <div class="icon-item"><code>{{Redshift}}</code> - Redshift</div>
+                        <div class="icon-item"><code>{{QuickSight}}</code> - QuickSight</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>Management</h4>
+                        <div class="icon-item"><code>{{CloudWatch}}</code> - CloudWatch</div>
+                        <div class="icon-item"><code>{{CloudTrail}}</code> - CloudTrail</div>
+                        <div class="icon-item"><code>{{CloudFormation}}</code> - CloudFormation</div>
                     </div>
                     <div class="icon-category">
                         <h4>General</h4>

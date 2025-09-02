@@ -111,6 +111,8 @@ let currentZoom = 1;
 let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 let currentTranslate = { x: 0, y: 0 };
+let diagramContent = null;
+let diagramViewport = null;
 
 // AWS Icon placeholder mapping - using actual AWS SVG icons
 const awsIconPlaceholders = {
@@ -146,9 +148,35 @@ const awsIconPlaceholders = {
     '{{Cognito}}': '<img src="aws-icons/service-icons/security-identity-compliance/32/Arch_Amazon-Cognito_32.svg" width="32" height="32"/><br/>Cognito',
     
     // Application Integration
-    '{{SQS}}': '<img src="aws-icons/service-icons/application-integration/32/Arch_Amazon-Simple-Queue-Service_32.svg" width="32" height="32"/><br/>SQS Queue',
-    '{{SNS}}': '<img src="aws-icons/service-icons/application-integration/32/Arch_Amazon-Simple-Notification-Service_32.svg" width="32" height="32"/><br/>SNS',
-    '{{EventBridge}}': '<img src="aws-icons/service-icons/application-integration/32/Arch_Amazon-EventBridge_32.svg" width="32" height="32"/><br/>EventBridge',
+    '{{SQS}}': '<img src="aws-icons/service-icons/app_integration/32/Arch_Amazon-Simple-Queue-Service_32.svg" width="32" height="32"/><br/>SQS Queue',
+    '{{SNS}}': '<img src="aws-icons/service-icons/app_integration/32/Arch_Amazon-Simple-Notification-Service_32.svg" width="32" height="32"/><br/>SNS',
+    '{{EventBridge}}': '<img src="aws-icons/service-icons/app_integration/32/Arch_Amazon-EventBridge_32.svg" width="32" height="32"/><br/>EventBridge',
+    '{{StepFunctions}}': '<img src="aws-icons/service-icons/app_integration/32/Arch_AWS-Step-Functions_32.svg" width="32" height="32"/><br/>Step Functions',
+    '{{AppSync}}': '<img src="aws-icons/service-icons/app_integration/32/Arch_AWS-AppSync_32.svg" width="32" height="32"/><br/>AppSync',
+    '{{MQ}}': '<img src="aws-icons/service-icons/app_integration/32/Arch_Amazon-MQ_32.svg" width="32" height="32"/><br/>Amazon MQ',
+    
+    // Analytics
+    '{{Kinesis}}': '<img src="aws-icons/service-icons/analytics/32/Arch_Amazon-Kinesis_32.svg" width="32" height="32"/><br/>Kinesis',
+    '{{Athena}}': '<img src="aws-icons/service-icons/analytics/32/Arch_Amazon-Athena_32.svg" width="32" height="32"/><br/>Athena',
+    '{{Redshift}}': '<img src="aws-icons/service-icons/analytics/32/Arch_Amazon-Redshift_32.svg" width="32" height="32"/><br/>Redshift',
+    '{{QuickSight}}': '<img src="aws-icons/service-icons/analytics/32/Arch_Amazon-QuickSight_32.svg" width="32" height="32"/><br/>QuickSight',
+    '{{EMR}}': '<img src="aws-icons/service-icons/analytics/32/Arch_Amazon-EMR_32.svg" width="32" height="32"/><br/>EMR',
+    '{{Glue}}': '<img src="aws-icons/service-icons/analytics/32/Arch_AWS-Glue_32.svg" width="32" height="32"/><br/>AWS Glue',
+    
+    // Machine Learning
+    '{{SageMaker}}': '<img src="aws-icons/service-icons/analytics/32/Arch_Amazon-SageMaker_32.svg" width="32" height="32"/><br/>SageMaker',
+    
+    // Developer Tools
+    '{{CodeCommit}}': '<img src="aws-icons/service-icons/developer_tools/32/Arch_AWS-CodeCommit_32.svg" width="32" height="32"/><br/>CodeCommit',
+    '{{CodeBuild}}': '<img src="aws-icons/service-icons/developer_tools/32/Arch_AWS-CodeBuild_32.svg" width="32" height="32"/><br/>CodeBuild',
+    '{{CodeDeploy}}': '<img src="aws-icons/service-icons/developer_tools/32/Arch_AWS-CodeDeploy_32.svg" width="32" height="32"/><br/>CodeDeploy',
+    '{{CodePipeline}}': '<img src="aws-icons/service-icons/developer_tools/32/Arch_AWS-CodePipeline_32.svg" width="32" height="32"/><br/>CodePipeline',
+    
+    // Management & Governance
+    '{{CloudWatch}}': '<img src="aws-icons/service-icons/management_governance/32/Arch_Amazon-CloudWatch_32.svg" width="32" height="32"/><br/>CloudWatch',
+    '{{CloudTrail}}': '<img src="aws-icons/service-icons/management_governance/32/Arch_AWS-CloudTrail_32.svg" width="32" height="32"/><br/>CloudTrail',
+    '{{Config}}': '<img src="aws-icons/service-icons/management_governance/32/Arch_AWS-Config_32.svg" width="32" height="32"/><br/>AWS Config',
+    '{{CloudFormation}}': '<img src="aws-icons/service-icons/management_governance/32/Arch_AWS-CloudFormation_32.svg" width="32" height="32"/><br/>CloudFormation',
     
     // General
     '{{User}}': '<img src="aws-icons/group-icons/AWS-Account_32.svg" width="32" height="32"/><br/>User',
@@ -160,11 +188,18 @@ const awsIconPlaceholders = {
 function replaceAwsIconPlaceholders(code) {
     let processedCode = code;
     
-    // Replace placeholders with proper Mermaid node syntax using simple string replacement
+    // Handle placeholders inside node brackets like A[{{User}}] -> A["icon HTML"]
     Object.keys(awsIconPlaceholders).forEach(placeholder => {
         const nodeId = placeholder.replace(/[{}]/g, ''); // Remove {{ }}
-        const replacement = `${nodeId}["${awsIconPlaceholders[placeholder]}"]`;
-        processedCode = processedCode.split(placeholder).join(replacement);
+        const iconHtml = awsIconPlaceholders[placeholder];
+        
+        // Replace patterns like A[{{Service}}] with A["icon HTML"]
+        const bracketPattern = new RegExp(`(\\w+)\\[${placeholder.replace(/[{}]/g, '\\$&')}\\]`, 'g');
+        processedCode = processedCode.replace(bracketPattern, `$1["${iconHtml}"]`);
+        
+        // Replace standalone placeholders like {{Service}} with Service["icon HTML"]
+        const standalonePattern = new RegExp(`(?<!\\[)${placeholder.replace(/[{}]/g, '\\$&')}(?!\\])`, 'g');
+        processedCode = processedCode.replace(standalonePattern, `${nodeId}["${iconHtml}"]`);
     });
     
     return processedCode;
@@ -204,62 +239,99 @@ function renderDiagram(code) {
     }
 }
 
-// Initialize diagram controls
-function initializeDiagramControls() {
-    const container = document.getElementById('diagramContainer');
-    const wrapper = document.getElementById('diagramWrapper');
+// Initialize zoom and pan functionality
+function initializeZoomPan() {
+    diagramContent = document.getElementById('diagramContent');
+    diagramViewport = document.getElementById('diagramViewport');
     
-    if (!container || !wrapper) return;
+    if (!diagramContent || !diagramViewport) return;
     
-    // Reset zoom and pan
+    // Zoom buttons
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const zoomResetBtn = document.getElementById('zoomResetBtn');
+    
+    if (zoomInBtn) {
+        zoomInBtn.addEventListener('click', () => {
+            zoom(1.2);
+        });
+    }
+    
+    if (zoomOutBtn) {
+        zoomOutBtn.addEventListener('click', () => {
+            zoom(0.8);
+        });
+    }
+    
+    if (zoomResetBtn) {
+        zoomResetBtn.addEventListener('click', () => {
+            resetZoom();
+        });
+    }
+    
+    // Mouse wheel zoom
+    diagramViewport.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        zoom(delta);
+    });
+    
+    // Mouse drag pan
+    diagramViewport.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', endDrag);
+}
+
+function zoom(factor) {
+    const newZoom = Math.max(0.1, Math.min(5, currentZoom * factor));
+    
+    if (newZoom !== currentZoom) {
+        currentZoom = newZoom;
+        updateTransform();
+    }
+}
+
+function resetZoom() {
     currentZoom = 1;
     currentTranslate = { x: 0, y: 0 };
     updateTransform();
-    
-    // Mouse wheel zoom
-    container.addEventListener('wheel', (e) => {
+}
+
+function startDrag(e) {
+    if (e.target.closest('.mermaid') || e.target === diagramViewport) {
+        isDragging = true;
+        dragStart = { x: e.clientX - currentTranslate.x, y: e.clientY - currentTranslate.y };
+        diagramViewport.style.cursor = 'grabbing';
         e.preventDefault();
-        const rect = container.getBoundingClientRect();
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        
-        const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-        currentZoom = Math.max(0.1, Math.min(5, currentZoom * zoomFactor));
-        
+    }
+}
+
+function drag(e) {
+    if (isDragging) {
+        currentTranslate.x = e.clientX - dragStart.x;
+        currentTranslate.y = e.clientY - dragStart.y;
         updateTransform();
-    });
-    
-    // Pan functionality
-    container.addEventListener('mousedown', (e) => {
-        if (e.button === 0) { // Left mouse button
-            isDragging = true;
-            dragStart.x = e.clientX - currentTranslate.x;
-            dragStart.y = e.clientY - currentTranslate.y;
-            container.style.cursor = 'grabbing';
-        }
-    });
-    
-    document.addEventListener('mousemove', (e) => {
-        if (isDragging) {
-            currentTranslate.x = e.clientX - dragStart.x;
-            currentTranslate.y = e.clientY - dragStart.y;
-            updateTransform();
-        }
-    });
-    
-    document.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            container.style.cursor = 'grab';
-        }
-    });
+    }
+}
+
+function endDrag() {
+    isDragging = false;
+    if (diagramViewport) {
+        diagramViewport.style.cursor = 'grab';
+    }
 }
 
 // Update diagram transform
 function updateTransform() {
-    const wrapper = document.getElementById('diagramWrapper');
-    if (wrapper) {
-        wrapper.style.transform = `translate(${currentTranslate.x}px, ${currentTranslate.y}px) scale(${currentZoom})`;
+    if (diagramContent) {
+        diagramContent.style.transform = `scale(${currentZoom}) translate(${currentTranslate.x}px, ${currentTranslate.y}px)`;
+    }
+}
+
+// Initialize input listeners
+function initializeInputListeners() {
+    if (input) {
+        input.addEventListener('input', handleInput);
     }
 }
 
@@ -272,7 +344,7 @@ function handleInput() {
 }
 
 // Template button handlers
-function initTemplateButtons() {
+function initializeTemplateButtons() {
     const templateBtns = document.querySelectorAll('.template-btn');
     templateBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -287,6 +359,94 @@ function initTemplateButtons() {
             }
         });
     });
+}
+
+// Clear button handler
+function initializeClearButton() {
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (codeEditor) {
+                codeEditor.setValue('');
+            } else if (input) {
+                input.value = '';
+            }
+            renderDiagram('');
+        });
+    }
+}
+
+// Fullscreen functionality
+function initializeFullscreen() {
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+    const diagramContainer = document.getElementById('diagramContainer');
+    
+    if (fullscreenBtn && diagramContainer) {
+        fullscreenBtn.addEventListener('click', () => {
+            diagramContainer.classList.add('fullscreen');
+            fullscreenBtn.style.display = 'none';
+            if (exitFullscreenBtn) exitFullscreenBtn.style.display = 'block';
+        });
+    }
+    
+    if (exitFullscreenBtn && diagramContainer) {
+        exitFullscreenBtn.addEventListener('click', () => {
+            diagramContainer.classList.remove('fullscreen');
+            exitFullscreenBtn.style.display = 'none';
+            if (fullscreenBtn) fullscreenBtn.style.display = 'block';
+        });
+    }
+}
+
+// API Key functionality
+function initializeApiKey() {
+    const apiKeyBtn = document.getElementById('apiKeyBtn');
+    const apiKeyModal = document.getElementById('apiKeyModal');
+    const saveApiKeyBtn = document.getElementById('saveApiKey');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const closeApiModal = document.getElementById('closeApiModal');
+    
+    if (apiKeyBtn && apiKeyModal) {
+        apiKeyBtn.addEventListener('click', () => {
+            apiKeyModal.style.display = 'flex';
+        });
+    }
+    
+    if (closeApiModal && apiKeyModal) {
+        closeApiModal.addEventListener('click', () => {
+            apiKeyModal.style.display = 'none';
+        });
+    }
+    
+    if (saveApiKeyBtn && apiKeyInput) {
+        saveApiKeyBtn.addEventListener('click', () => {
+            const apiKey = apiKeyInput.value.trim();
+            if (apiKey) {
+                localStorage.setItem('gemini_api_key', apiKey);
+                updateApiStatus();
+                if (apiKeyModal) apiKeyModal.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Theme toggle functionality
+function setupThemeToggle() {
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        });
+    }
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+    }
 }
 
 // Initialize input event listeners
@@ -424,92 +584,122 @@ function updateApiStatus() {
 // Generate AWS Icons context for AI prompts
 function generateAwsIconsContext() {
     return `
-AWS ICONS REFERENCE - Use these exact syntaxes for AWS services:
+AWS ICONS REFERENCE - Use these PLACEHOLDER ABSTRACTIONS for clean, readable code:
+
+IMPORTANT: Always use the {{ServiceName}} placeholder format. Do NOT use full HTML img tags.
+The system will automatically replace these placeholders with the actual icons when rendering.
+
+AVAILABLE PLACEHOLDERS:
 
 COMPUTE SERVICES:
-- EC2: EC2["<img src='aws-icons/service-icons/compute/32/Arch_Amazon-EC2_32.svg' width='32' height='32'/><br/>EC2 Instance"]
-- Lambda: Lambda["<img src='aws-icons/service-icons/compute/32/Arch_AWS-Lambda_32.svg' width='32' height='32'/><br/>Lambda Function"]
-- ECS: ECS["<img src='aws-icons/service-icons/containers/32/Arch_Amazon-Elastic-Container-Service_32.svg' width='32' height='32'/><br/>ECS Container"]
-- EKS: EKS["<img src='aws-icons/service-icons/containers/32/Arch_Amazon-Elastic-Kubernetes-Service_32.svg' width='32' height='32'/><br/>EKS"]
-- Fargate: Fargate["<img src='aws-icons/service-icons/containers/32/Arch_AWS-Fargate_32.svg' width='32' height='32'/><br/>Fargate"]
+- {{EC2}} - EC2 Instance
+- {{Lambda}} - Lambda Function  
+- {{ECS}} - ECS Container
+- {{EKS}} - EKS Cluster
+- {{Fargate}} - Fargate
 
 STORAGE SERVICES:
-- S3: S3["<img src='aws-icons/service-icons/storage/32/Arch_Amazon-Simple-Storage-Service_32.svg' width='32' height='32'/><br/>S3 Bucket"]
-- EBS: EBS["<img src='aws-icons/service-icons/storage/32/Arch_Amazon-Elastic-Block-Store_32.svg' width='32' height='32'/><br/>EBS Volume"]
-- EFS: EFS["<img src='aws-icons/service-icons/storage/32/Arch_Amazon-Elastic-File-System_32.svg' width='32' height='32'/><br/>EFS File System"]
+- {{S3}} - S3 Bucket
+- {{EBS}} - EBS Volume
+- {{EFS}} - EFS File System
 
 DATABASE SERVICES:
-- RDS: RDS["<img src='aws-icons/service-icons/database/32/Arch_Amazon-RDS_32.svg' width='32' height='32'/><br/>RDS Database"]
-- DynamoDB: DynamoDB["<img src='aws-icons/service-icons/database/32/Arch_Amazon-DynamoDB_32.svg' width='32' height='32'/><br/>DynamoDB"]
-- Aurora: Aurora["<img src='aws-icons/service-icons/database/32/Arch_Amazon-Aurora_32.svg' width='32' height='32'/><br/>Aurora"]
-- ElastiCache: ElastiCache["<img src='aws-icons/service-icons/database/32/Arch_Amazon-ElastiCache_32.svg' width='32' height='32'/><br/>ElastiCache"]
+- {{RDS}} - RDS Database
+- {{DynamoDB}} - DynamoDB Table
+- {{Aurora}} - Aurora Database
+- {{ElastiCache}} - ElastiCache
 
 NETWORKING & CDN:
-- CloudFront: CloudFront["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Amazon-CloudFront_32.svg' width='32' height='32'/><br/>CloudFront"]
-- Route53: Route53["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Amazon-Route-53_32.svg' width='32' height='32'/><br/>Route 53"]
-- ALB: ALB["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Elastic-Load-Balancing_32.svg' width='32' height='32'/><br/>Load Balancer"]
-- APIGateway: APIGateway["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Amazon-API-Gateway_32.svg' width='32' height='32'/><br/>API Gateway"]
-- VPC: VPC["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Amazon-Virtual-Private-Cloud_32.svg' width='32' height='32'/><br/>VPC"]
+- {{VPC}} - Virtual Private Cloud
+- {{ALB}} - Application Load Balancer
+- {{CloudFront}} - CloudFront CDN
+- {{Route53}} - Route 53 DNS
+- {{APIGateway}} - API Gateway
 
 SECURITY & IDENTITY:
-- IAM: IAM["<img src='aws-icons/service-icons/security-identity-compliance/32/Arch_AWS-Identity-and-Access-Management_32.svg' width='32' height='32'/><br/>IAM"]
-- Cognito: Cognito["<img src='aws-icons/service-icons/security-identity-compliance/32/Arch_Amazon-Cognito_32.svg' width='32' height='32'/><br/>Cognito"]
-- KMS: KMS["<img src='aws-icons/service-icons/security-identity-compliance/32/Arch_AWS-Key-Management-Service_32.svg' width='32' height='32'/><br/>KMS"]
-- WAF: WAF["<img src='aws-icons/service-icons/security-identity-compliance/32/Arch_AWS-WAF_32.svg' width='32' height='32'/><br/>WAF"]
+- {{IAM}} - Identity & Access Management
+- {{Cognito}} - Cognito User Pool
+- {{KMS}} - Key Management Service
+- {{WAF}} - Web Application Firewall
 
-APP INTEGRATION:
-- SQS: SQS["<img src='aws-icons/service-icons/application-integration/32/Arch_Amazon-Simple-Queue-Service_32.svg' width='32' height='32'/><br/>SQS Queue"]
-- SNS: SNS["<img src='aws-icons/service-icons/application-integration/32/Arch_Amazon-Simple-Notification-Service_32.svg' width='32' height='32'/><br/>SNS"]
-- EventBridge: EventBridge["<img src='aws-icons/service-icons/application-integration/32/Arch_Amazon-EventBridge_32.svg' width='32' height='32'/><br/>EventBridge"]
+APPLICATION INTEGRATION:
+- {{SQS}} - Simple Queue Service
+- {{SNS}} - Simple Notification Service
+- {{EventBridge}} - EventBridge
+- {{StepFunctions}} - Step Functions
+- {{AppSync}} - AppSync GraphQL
+- {{MQ}} - Amazon MQ
+
+ANALYTICS:
+- {{Kinesis}} - Kinesis Data Streams
+- {{Athena}} - Athena Query Service
+- {{Redshift}} - Redshift Data Warehouse
+- {{QuickSight}} - QuickSight BI
+- {{EMR}} - Elastic MapReduce
+- {{Glue}} - AWS Glue ETL
+
+MACHINE LEARNING:
+- {{SageMaker}} - SageMaker ML Platform
+
+DEVELOPER TOOLS:
+- {{CodeCommit}} - CodeCommit Git
+- {{CodeBuild}} - CodeBuild CI
+- {{CodeDeploy}} - CodeDeploy
+- {{CodePipeline}} - CodePipeline
+
+MANAGEMENT & GOVERNANCE:
+- {{CloudWatch}} - CloudWatch Monitoring
+- {{CloudTrail}} - CloudTrail Audit
+- {{Config}} - AWS Config
+- {{CloudFormation}} - CloudFormation IaC
 
 GENERAL:
-- User: User["<img src='aws-icons/group-icons/AWS-Account_32.svg' width='32' height='32'/><br/>User"]
-- Users: Users["<img src='aws-icons/group-icons/Corporate-data-center_32.svg' width='32' height='32'/><br/>Users"]
-- Internet: Internet["<img src='aws-icons/group-icons/AWS-Cloud_32.svg' width='32' height='32'/><br/>Internet"]
+- {{User}} - User/Client
+- {{Users}} - Multiple Users
+- {{Internet}} - Internet/External
+
+EXAMPLE USAGE:
+flowchart TD
+    {{User}} --> {{Route53}}
+    {{Route53}} --> {{CloudFront}}
+    {{CloudFront}} --> {{ALB}}
+    {{ALB}} --> {{EC2}}
+    {{EC2}} --> {{RDS}}
+    
+    subgraph "AWS Cloud"
+        {{CloudFront}}
+        {{ALB}}
+        {{EC2}}
+        {{RDS}}
+    end
+
+NOTE: Use placeholders as standalone nodes ({{Service}}) NOT inside brackets like A[{{Service}}]
 `;
 }
 
 // AI Integration with Google Gemini
 async function callGemini(prompt, currentCode) {
     const awsIconsContext = generateAwsIconsContext();
-    const systemPrompt = `You are an expert at creating and modifying Mermaid diagrams, especially AWS architecture diagrams using official AWS icons.
+    const systemPrompt = `You are an expert at creating and modifying Mermaid diagrams, especially AWS architecture diagrams.
 
 ${awsIconsContext}
 
-CRITICAL REQUIREMENTS - YOU MUST FOLLOW THESE EXACTLY:
-1. NEVER use simple node names like "User", "EC2", "S3" - ALWAYS use the full icon syntax
-2. MANDATORY: Replace ALL AWS service references with their complete icon syntax from above
-3. Example: Instead of "EC2" use: EC2["<img src='aws-icons/service-icons/compute/32/Arch_Amazon-EC2_32.svg' width='32' height='32'/><br/>EC2 Instance"]
-4. Example: Instead of "User" use: User["<img src='aws-icons/service-icons/general_icons/32/Arch_User_32.svg' width='32' height='32'/><br/>User"]
-5. EVERY AWS service node MUST include the complete <img> tag with src, width, height, and <br/> label
+CRITICAL REQUIREMENTS:
+1. ALWAYS use {{ServiceName}} placeholder format as STANDALONE nodes - NEVER use full HTML img tags
+2. DO NOT put placeholders inside brackets like A[{{User}}] - use {{User}} directly
+3. The placeholders will be automatically converted to proper Mermaid nodes with icons
+4. Keep the code clean and readable using only the placeholder abstractions
+5. Use appropriate Mermaid syntax (flowchart TD, graph LR, etc.)
+6. Group related services in subgraphs when logical
+7. Use meaningful connections and clear flow
+8. Ensure diagrams follow AWS best practices
 
-TRANSFORMATION RULES:
-- User → User["<img src='aws-icons/service-icons/general_icons/32/Arch_User_32.svg' width='32' height='32'/><br/>User"]
-- EC2 → EC2["<img src='aws-icons/service-icons/compute/32/Arch_Amazon-EC2_32.svg' width='32' height='32'/><br/>EC2 Instance"]
-- Lambda → Lambda["<img src='aws-icons/service-icons/compute/32/Arch_AWS-Lambda_32.svg' width='32' height='32'/><br/>Lambda Function"]
-- S3 → S3["<img src='aws-icons/service-icons/storage/32/Arch_Amazon-Simple-Storage-Service_32.svg' width='32' height='32'/><br/>S3 Bucket"]
-- RDS → RDS["<img src='aws-icons/service-icons/database/32/Arch_Amazon-RDS_32.svg' width='32' height='32'/><br/>RDS Database"]
-- DynamoDB → DynamoDB["<img src='aws-icons/service-icons/database/32/Arch_Amazon-DynamoDB_32.svg' width='32' height='32'/><br/>DynamoDB"]
-- CloudFront → CloudFront["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Amazon-CloudFront_32.svg' width='32' height='32'/><br/>CloudFront"]
-- ALB → ALB["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Elastic-Load-Balancing_32.svg' width='32' height='32'/><br/>Load Balancer"]
-- APIGateway → APIGateway["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Amazon-API-Gateway_32.svg' width='32' height='32'/><br/>API Gateway"]
-- Route53 → Route53["<img src='aws-icons/service-icons/networking_content_delivery/32/Arch_Amazon-Route-53_32.svg' width='32' height='32'/><br/>Route 53"]
+Current code to modify:
+${currentCode}
 
-FAILURE TO USE COMPLETE ICON SYNTAX WILL RESULT IN INCORRECT OUTPUT.
+User request: ${prompt}
 
-CRITICAL MERMAID SYNTAX RULES - FOLLOW EXACTLY:
-1. EVERY node must have format: NodeID["Display Text"]
-2. NEVER write: Route53 --> "Pop" (WRONG - will cause parse error)
-3. ALWAYS write: Route53 --> Pop["Pop"] (CORRECT)
-4. NEVER use standalone quoted strings in connections
-5. Example correct syntax:
-   - Pop["Pop Server"] 
-   - REC["Record Server"]
-   - Origin["Origin Server"]
-6. Every connection: SourceNodeID --> TargetNodeID["Target Label"]
-7. NO exceptions - all nodes need IDs before square brackets
-
-Respond with ONLY the updated Mermaid code with complete icon syntax, no explanations or markdown formatting.`;
+Provide ONLY clean Mermaid diagram code using {{ServiceName}} placeholders. No explanations or HTML tags.`;
     
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${currentApiKey}`, {
@@ -703,7 +893,7 @@ function initializeCodeEditor() {
 }
 
 // Initialize keyboard shortcuts
-function initKeyboardShortcuts() {
+function setupKeyboardShortcuts() {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             const container = document.getElementById('diagramContainer');
@@ -766,26 +956,32 @@ function setupIconsPopup() {
 
 // Main initialization function
 function initializeApp() {
+    // Initialize CodeMirror first
     initializeCodeEditor();
-    initInputListeners();
-    initTemplateButtons();
-    initZoomControls();
-    initFullscreenControls();
-    initClearButton();
-    initApiKeyManagement();
+    
+    initializeInputListeners();
+    initializeTemplateButtons();
+    initializeZoomPan();
+    initializeClearButton();
+    initializeFullscreen();
+    initializeApiKey();
     initAI();
-    initPopups();
-    initTheme();
-    initKeyboardShortcuts();
-    setupAIChat();
     setupIconsPopup();
+    setupAIChat();
+    setupThemeToggle();
+    setupKeyboardShortcuts();
+    
     loadSavedApiKey();
     updateApiStatus();
     
-    // Initial render
-    if (input && input.value) {
-        renderDiagram(input.value);
+    // Initial render with default template
+    const defaultCode = templates.basic;
+    if (codeEditor) {
+        codeEditor.setValue(defaultCode);
+    } else if (input) {
+        input.value = defaultCode;
     }
+    renderDiagram(defaultCode);
 }
 
 // Initialize when DOM is ready
