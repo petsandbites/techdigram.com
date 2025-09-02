@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagram Editor</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/simple-icons@v9/icons/amazonaws.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>☁️ Diagram Editor</h1>
+        </div>
+        
+        <div class="editor-container">
+            <div class="input-panel">
+                <div class="input-header">
+                    <span>Code</span>
+                    <div class="template-buttons">
+                        <button class="template-btn" data-template="basic">Basic Flow</button>
+                        <button class="template-btn" data-template="lambda">Lambda@Edge</button>
+                        <button class="template-btn" data-template="microservices">Microservices</button>
+                    </div>
+                </div>
+                <div class="aws-guide">
+                    <h4>Icons Guide:</h4>
+                    <strong>Compute:</strong> <i class="fab fa-aws"></i> EC2 <i class="fas fa-bolt"></i> Lambda <i class="fab fa-docker"></i> ECS <i class="fas fa-dharmachakra"></i> EKS<br>
+                    <strong>Storage:</strong> <i class="fas fa-database"></i> S3 <i class="fas fa-server"></i> RDS <i class="fas fa-table"></i> DynamoDB <i class="fas fa-folder"></i> EFS<br>
+                    <strong>Network:</strong> <i class="fas fa-cloud"></i> CloudFront <i class="fas fa-balance-scale"></i> ALB <i class="fas fa-globe"></i> Route53 <i class="fas fa-shield-alt"></i> VPC<br>
+                    <strong>Security:</strong> <i class="fas fa-user-shield"></i> IAM <i class="fas fa-key"></i> Cognito <i class="fas fa-lock"></i> KMS <i class="fas fa-shield-alt"></i> WAF
+                </div>
+                <textarea 
+                    id="mermaidInput" 
+                    class="mermaid-input" 
+                    placeholder="Enter your AWS architecture code here...">graph TD
+    User["<i class='fas fa-user'></i><br/>User"] --> DNS["<i class='fas fa-globe'></i><br/>Route 53"]
+    DNS --> CF["<i class='fas fa-cloud'></i><br/>CloudFront"]
+    CF --> LE["<i class='fas fa-bolt'></i><br/>Lambda@Edge"]
+    LE --> ALB["<i class='fas fa-balance-scale'></i><br/>Load Balancer"]
+    ALB --> EC2["<i class='fab fa-aws'></i><br/>EC2 Instance"]
+    EC2 --> RDS["<i class='fas fa-server'></i><br/>RDS Database"]
+    
+    subgraph "AWS Cloud"
+        CF
+        LE
+        ALB
+        EC2
+        RDS
+    end</textarea>
+            </div>
+            
+            <div class="output-panel">
+                <div class="output-header">
+                    <span>Diagram Preview</span>
+                    <button id="clearBtn" class="clear-btn">Clear</button>
+                </div>
+                <div id="mermaidOutput" class="mermaid-output">
+                    <div class="loading">Loading diagram...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
