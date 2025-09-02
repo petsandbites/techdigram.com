@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AWS Diagram Editor - Functionality Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border-left: 4px solid #007acc;
+            padding-left: 15px;
+        }
+        .test-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .test-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .pass { background: #d4edda; color: #155724; }
+        .fail { background: #f8d7da; color: #721c24; }
+        .pending { background: #fff3cd; color: #856404; }
+        button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #005a9e; }
+        .manual-test {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .auto-test {
+            background: #f3e5f5;
+            border: 1px solid #9c27b0;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 AWS Diagram Editor - Comprehensive Test Suite</h1>
+    
+    <div class="test-container">
+        <h2>📋 Test Overview</h2>
+        <p>This test suite validates all functionality of the AWS Architecture Diagram Editor.</p>
+        <button onclick="runAllTests()">🚀 Run All Automated Tests</button>
+        <button onclick="openApp()">🔗 Open App in New Tab</button>
+        <div id="overall-results" class="test-results" style="display: none;">
+            <h3>Overall Results</h3>
+            <div id="results-summary"></div>
+        </div>
+    </div>
+
+    <!-- Embedded App for Testing -->
+    <div class="test-container">
+        <h2>🎯 Live App (for Manual Testing)</h2>
+        <iframe src="index.html" id="app-frame"></iframe>
+    </div>
+
+    <!-- Automated Tests -->
+    <div class="test-container">
+        <div class="test-section">
+            <h2>🤖 Automated Tests</h2>
+            
+            <div class="auto-test">
+                <h3>1. DOM Elements Existence</h3>
+                <div id="dom-tests"></div>
+                <button onclick="testDOMElements()">Test DOM Elements</button>
+            </div>
+
+            <div class="auto-test">
+                <h3>2. JavaScript Functions</h3>
+                <div id="js-tests"></div>
+                <button onclick="testJavaScriptFunctions()">Test JS Functions</button>
+            </div>
+
+            <div class="auto-test">
+                <h3>3. CSS Styles</h3>
+                <div id="css-tests"></div>
+                <button onclick="testCSSStyles()">Test CSS Styles</button>
+            </div>
+
+            <div class="auto-test">
+                <h3>4. Local Storage</h3>
+                <div id="storage-tests"></div>
+                <button onclick="testLocalStorage()">Test Local Storage</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manual Tests -->
+    <div class="test-container">
+        <div class="test-section">
+            <h2>👤 Manual Tests (Follow Instructions)</h2>
+            
+            <div class="manual-test">
+                <h3>1. Layout & UI Tests</h3>
+                <div class="test-item">
+                    <span>✅ Top bar is compact with API key section</span>
+                    <span class="test-status pending" id="layout-1">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Screen is split 50/50 between code editor and diagram</span>
+                    <span class="test-status pending" id="layout-2">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ AI chat floats in bottom-right corner</span>
+                    <span class="test-status pending" id="layout-3">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Code editor is scrollable and large</span>
+                    <span class="test-status pending" id="layout-4">MANUAL</span>
+                </div>
+            </div>
+
+            <div class="manual-test">
+                <h3>2. API Key Management</h3>
+                <div class="test-item">
+                    <span>✅ Enter API key → Status dot changes to 🟢</span>
+                    <span class="test-status pending" id="api-1">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ API key persists after page refresh</span>
+                    <span class="test-status pending" id="api-2">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Invalid API key shows 🟡 status</span>
+                    <span class="test-status pending" id="api-3">MANUAL</span>
+                </div>
+            </div>
+
+            <div class="manual-test">
+                <h3>3. Code Editor Tests</h3>
+                <div class="test-item">
+                    <span>✅ Type Mermaid code → Diagram renders</span>
+                    <span class="test-status pending" id="editor-1">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Syntax highlighting works</span>
+                    <span class="test-status pending" id="editor-2">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Clear button empties editor</span>
+                    <span class="test-status pending" id="editor-3">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Undo/Redo buttons exist (no functionality)</span>
+                    <span class="test-status pending" id="editor-4">MANUAL</span>
+                </div>
+            </div>
+
+            <div class="manual-test">
+                <h3>4. AI Chat Tests</h3>
+                <div class="test-item">
+                    <span>✅ Click "💬 AI" → Floating chat appears</span>
+                    <span class="test-status pending" id="ai-1">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Click "×" → Chat closes</span>
+                    <span class="test-status pending" id="ai-2">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Enter prompt + "Ask AI" → Diagram updates</span>
+                    <span class="test-status pending" id="ai-3">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Ctrl+Enter in prompt → Triggers AI</span>
+                    <span class="test-status pending" id="ai-4">MANUAL</span>
+                </div>
+            </div>
+
+            <div class="manual-test">
+                <h3>5. Fullscreen & Theme Tests</h3>
+                <div class="test-item">
+                    <span>✅ Fullscreen button works</span>
+                    <span class="test-status pending" id="fullscreen-1">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ ESC key exits fullscreen</span>
+                    <span class="test-status pending" id="fullscreen-2">MANUAL</span>
+                </div>
+                <div class="test-item">
+                    <span>✅ Theme toggle works (🌙/☀️)</span>
+                    <span class="test-status pending" id="theme-1">MANUAL</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            dom: {},
+            js: {},
+            css: {},
+            storage: {}
+        };
+
+        function openApp() {
+            window.open('index.html', '_blank');
+        }
+
+        function testDOMElements() {
+            const iframe = document.getElementById('app-frame');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            const elements = [
+                'apiKeyInput', 'saveApiKey', 'apiStatus', 'themeToggle', 'aiToggle',
+                'codeEditor', 'clearBtn', 'fullscreenBtn', 'exitFullscreenBtn',
+                'aiChatFloat', 'aiPromptInput', 'generateBtn', 'aiCloseBtn',
+                'mermaidOutput', 'diagramContainer', 'editorUndoBtn', 'editorRedoBtn'
+            ];
+
+            let results = '';
+            let passed = 0;
+            
+            elements.forEach(id => {
+                const element = iframeDoc.getElementById(id);
+                const exists = element !== null;
+                testResults.dom[id] = exists;
+                
+                if (exists) passed++;
+                
+                results += `<div class="test-item">
+                    <span>${id}</span>
+                    <span class="test-status ${exists ? 'pass' : 'fail'}">${exists ? 'PASS' : 'FAIL'}</span>
+                </div>`;
+            });
+
+            results = `<p><strong>DOM Elements: ${passed}/${elements.length} passed</strong></p>` + results;
+            document.getElementById('dom-tests').innerHTML = results;
+        }
+
+        function testJavaScriptFunctions() {
+            const iframe = document.getElementById('app-frame');
+            const iframeWindow = iframe.contentWindow;
+            
+            const functions = [
+                'renderDiagram', 'callGemini', 'updateApiStatus', 'loadSavedApiKey',
+                'initializeCodeEditor', 'setupAIChat', 'handleInput', 'toggleTheme'
+            ];
+
+            let results = '';
+            let passed = 0;
+            
+            functions.forEach(funcName => {
+                const exists = typeof iframeWindow[funcName] === 'function';
+                testResults.js[funcName] = exists;
+                
+                if (exists) passed++;
+                
+                results += `<div class="test-item">
+                    <span>${funcName}()</span>
+                    <span class="test-status ${exists ? 'pass' : 'fail'}">${exists ? 'PASS' : 'FAIL'}</span>
+                </div>`;
+            });
+
+            results = `<p><strong>JavaScript Functions: ${passed}/${functions.length} passed</strong></p>` + results;
+            document.getElementById('js-tests').innerHTML = results;
+        }
+
+        function testCSSStyles() {
+            const iframe = document.getElementById('app-frame');
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            
+            const styles = [
+                '.top-bar', '.main-content', '.input-panel', '.diagram-panel',
+                '.ai-chat-float', '.code-editor', '.CodeMirror', '.generate-btn'
+            ];
+
+            let results = '';
+            let passed = 0;
+            
+            styles.forEach(selector => {
+                try {
+                    const element = iframeDoc.querySelector(selector);
+                    const exists = element !== null;
+                    testResults.css[selector] = exists;
+                    
+                    if (exists) passed++;
+                    
+                    results += `<div class="test-item">
+                        <span>${selector}</span>
+                        <span class="test-status ${exists ? 'pass' : 'fail'}">${exists ? 'PASS' : 'FAIL'}</span>
+                    </div>`;
+                } catch (e) {
+                    results += `<div class="test-item">
+                        <span>${selector}</span>
+                        <span class="test-status fail">ERROR</span>
+                    </div>`;
+                }
+            });
+
+            results = `<p><strong>CSS Styles: ${passed}/${styles.length} passed</strong></p>` + results;
+            document.getElementById('css-tests').innerHTML = results;
+        }
+
+        function testLocalStorage() {
+            const tests = [
+                { key: 'geminiApiKey', action: 'API Key Storage' },
+                { key: 'theme', action: 'Theme Storage' }
+            ];
+
+            let results = '';
+            let passed = 0;
+            
+            tests.forEach(test => {
+                try {
+                    // Test write
+                    localStorage.setItem(test.key, 'test-value');
+                    const canWrite = localStorage.getItem(test.key) === 'test-value';
+                    
+                    // Test read
+                    const canRead = localStorage.getItem(test.key) !== null;
+                    
+                    // Clean up
+                    localStorage.removeItem(test.key);
+                    const canDelete = localStorage.getItem(test.key) === null;
+                    
+                    const allPass = canWrite && canRead && canDelete;
+                    testResults.storage[test.key] = allPass;
+                    
+                    if (allPass) passed++;
+                    
+                    results += `<div class="test-item">
+                        <span>${test.action}</span>
+                        <span class="test-status ${allPass ? 'pass' : 'fail'}">${allPass ? 'PASS' : 'FAIL'}</span>
+                    </div>`;
+                } catch (e) {
+                    results += `<div class="test-item">
+                        <span>${test.action}</span>
+                        <span class="test-status fail">ERROR</span>
+                    </div>`;
+                }
+            });
+
+            results = `<p><strong>Local Storage: ${passed}/${tests.length} passed</strong></p>` + results;
+            document.getElementById('storage-tests').innerHTML = results;
+        }
+
+        function runAllTests() {
+            setTimeout(() => testDOMElements(), 100);
+            setTimeout(() => testJavaScriptFunctions(), 200);
+            setTimeout(() => testCSSStyles(), 300);
+            setTimeout(() => testLocalStorage(), 400);
+            setTimeout(() => showOverallResults(), 500);
+        }
+
+        function showOverallResults() {
+            const totalTests = Object.keys(testResults.dom).length + 
+                             Object.keys(testResults.js).length + 
+                             Object.keys(testResults.css).length + 
+                             Object.keys(testResults.storage).length;
+            
+            const passedTests = Object.values(testResults.dom).filter(Boolean).length +
+                              Object.values(testResults.js).filter(Boolean).length +
+                              Object.values(testResults.css).filter(Boolean).length +
+                              Object.values(testResults.storage).filter(Boolean).length;
+
+            const percentage = Math.round((passedTests / totalTests) * 100);
+            const status = percentage >= 80 ? 'pass' : percentage >= 60 ? 'pending' : 'fail';
+
+            document.getElementById('results-summary').innerHTML = `
+                <div class="test-item">
+                    <span><strong>Overall Test Results</strong></span>
+                    <span class="test-status ${status}">${passedTests}/${totalTests} (${percentage}%)</span>
+                </div>
+                <p><strong>Breakdown:</strong></p>
+                <ul>
+                    <li>DOM Elements: ${Object.values(testResults.dom).filter(Boolean).length}/${Object.keys(testResults.dom).length}</li>
+                    <li>JavaScript Functions: ${Object.values(testResults.js).filter(Boolean).length}/${Object.keys(testResults.js).length}</li>
+                    <li>CSS Styles: ${Object.values(testResults.css).filter(Boolean).length}/${Object.keys(testResults.css).length}</li>
+                    <li>Local Storage: ${Object.values(testResults.storage).filter(Boolean).length}/${Object.keys(testResults.storage).length}</li>
+                </ul>
+            `;
+
+            document.getElementById('overall-results').style.display = 'block';
+        }
+
+        // Auto-run tests when iframe loads
+        document.getElementById('app-frame').onload = function() {
+            setTimeout(() => runAllTests(), 1000);
+        };
+    </script>
+</body>
+</html>

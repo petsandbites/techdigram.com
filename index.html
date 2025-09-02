@@ -6,77 +6,152 @@
     <title>Diagram Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/simple-icons@v9/icons/amazonaws.js"></script>
+    <!-- CodeMirror for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/mode/simple.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>☁️ AI-Powered Diagram Editor</h1>
-            <div class="api-key-section">
-                <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Enter your Google Gemini API key (AIza...)">
-                <i class="fas fa-info-circle info-icon" id="infoIcon" title="How to get API key"></i>
-                <span id="apiStatus" class="api-status">No API key</span>
+        <!-- Compact Top Bar -->
+        <div class="top-bar">
+            <div class="app-title">
+                <h1>🏗️ AWS Diagram Editor</h1>
             </div>
-        </div>
-        
-        <div class="ai-panel" id="aiPanel">
-            <div class="ai-prompt-container">
-                <textarea id="aiPromptInput" class="ai-prompt-input" placeholder="Describe how you want to modify your diagram (e.g., 'Add a Redis cache between the load balancer and EC2', 'Convert this to use Lambda functions instead of EC2')..."></textarea>
-                <button id="aiSendBtn" class="ai-send-btn" disabled>Ask AI</button>
-            </div>
-            <div id="aiResponse" class="ai-response">
-                <div id="aiResponseText" class="ai-response-text"></div>
-                <div class="ai-actions">
-                    <button id="applyBtn" class="apply-btn">Apply Changes</button>
+            <div class="top-controls">
+                <div class="api-section">
+                    <span id="apiStatus" class="status-dot">⚪</span>
+                    <input type="password" id="apiKeyInput" placeholder="API Key" class="api-input">
+                    <button id="saveApiKey" class="api-save-btn">Save</button>
                 </div>
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <button class="info-btn" id="iconsInfoBtn" title="Show AWS Icons Reference">ℹ️</button>
+                <button class="ai-toggle" id="aiToggle">💬 AI</button>
             </div>
         </div>
         
-        <div class="editor-container">
+        <!-- Main Split Layout -->
+        <div class="main-content">
             <div class="input-panel">
                 <div class="input-header">
-                    <span>Code</span>
-                    <div class="template-buttons">
-                        <button class="template-btn" data-template="basic">Basic Flow</button>
-                        <button class="template-btn" data-template="lambda">Lambda@Edge</button>
-                        <button class="template-btn" data-template="microservices">Microservices</button>
+                    <span>Mermaid Code Editor</span>
+                    <div class="controls">
+                        <button id="clearBtn" class="control-btn">Clear</button>
+                        <button id="fullscreenBtn" class="control-btn">⛶ Fullscreen</button>
                     </div>
                 </div>
-                <div class="aws-guide">
-                    <h4>Icons Guide:</h4>
-                    <strong>Compute:</strong> <i class="fab fa-aws"></i> EC2 <i class="fas fa-bolt"></i> Lambda <i class="fab fa-docker"></i> ECS <i class="fas fa-dharmachakra"></i> EKS<br>
-                    <strong>Storage:</strong> <i class="fas fa-database"></i> S3 <i class="fas fa-server"></i> RDS <i class="fas fa-table"></i> DynamoDB <i class="fas fa-folder"></i> EFS<br>
-                    <strong>Network:</strong> <i class="fas fa-cloud"></i> CloudFront <i class="fas fa-balance-scale"></i> ALB <i class="fas fa-globe"></i> Route53 <i class="fas fa-shield-alt"></i> VPC<br>
-                    <strong>Security:</strong> <i class="fas fa-user-shield"></i> IAM <i class="fas fa-key"></i> Cognito <i class="fas fa-lock"></i> KMS <i class="fas fa-shield-alt"></i> WAF
+                <div class="editor-container">
+                    <!-- Removed undo/redo toolbar -->
+                    <div id="codeEditor" class="code-editor"></div>
                 </div>
-                <textarea 
-                    id="mermaidInput" 
-                    class="mermaid-input" 
-                    placeholder="Enter your AWS architecture code here...">graph TD
-    User["<i class='fas fa-user'></i><br/>User"] --> DNS["<i class='fas fa-globe'></i><br/>Route 53"]
-    DNS --> CF["<i class='fas fa-cloud'></i><br/>CloudFront"]
-    CF --> LE["<i class='fas fa-bolt'></i><br/>Lambda@Edge"]
-    LE --> ALB["<i class='fas fa-balance-scale'></i><br/>Load Balancer"]
-    ALB --> EC2["<i class='fab fa-aws'></i><br/>EC2 Instance"]
-    EC2 --> RDS["<i class='fas fa-server'></i><br/>RDS Database"]
-    
-    subgraph "AWS Cloud"
-        CF
-        LE
-        ALB
-        EC2
-        RDS
-    end</textarea>
             </div>
             
-            <div class="output-panel">
-                <div class="output-header">
+            <div class="diagram-panel">
+                <div class="diagram-header">
                     <span>Diagram Preview</span>
-                    <button id="clearBtn" class="clear-btn">Clear</button>
+                    <button id="exitFullscreenBtn" class="exit-fullscreen-btn" style="display: none;">✕</button>
                 </div>
-                <div id="mermaidOutput" class="mermaid-output">
-                    <div class="loading">Loading diagram...</div>
+                <div id="diagramContainer" class="diagram-container">
+                    <div id="mermaidOutput" class="mermaid-output">
+                        <div class="loading">Loading diagram...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Floating AI Chat -->
+        <div class="ai-chat-float" id="aiChatFloat">
+            <div class="ai-chat-header">
+                <span>✨ AI Assistant</span>
+                <button class="ai-close" id="aiCloseBtn">×</button>
+            </div>
+            <div class="ai-chat-content">
+                <textarea 
+                    id="aiPromptInput" 
+                    placeholder="Describe how you want to modify your diagram..." 
+                    class="ai-prompt-input"
+                ></textarea>
+                <button id="generateBtn" class="generate-btn">Ask AI</button>
+            </div>
+        </div>
+        
+        <textarea 
+            id="mermaidInput" 
+            class="mermaid-input hidden" 
+            placeholder="Enter your AWS architecture code here..."
+            spellcheck="false">graph TD
+    {{User}} --> {{Route53}}
+    {{Route53}} --> {{CloudFront}}
+    {{CloudFront}} --> {{Lambda}}
+    {{Lambda}} --> {{ALB}}
+    {{ALB}} --> {{EC2}}
+    {{EC2}} --> {{RDS}}
+    
+    subgraph "AWS Cloud"
+        {{CloudFront}}
+        {{Lambda}}
+        {{ALB}}
+        {{EC2}}
+        {{RDS}}
+    end</textarea>
+        
+        <!-- AWS Icons Reference Popup -->
+        <div class="icons-popup" id="iconsPopup">
+            <div class="popup-header">
+                <h3 class="popup-title">AWS Icons Reference</h3>
+                <button class="close-btn" id="closeIconsPopup">&times;</button>
+            </div>
+            <div class="popup-content">
+                <div class="icons-grid">
+                    <div class="icon-category">
+                        <h4>Compute</h4>
+                        <div class="icon-item"><code>{{EC2}}</code> - EC2 Instance</div>
+                        <div class="icon-item"><code>{{Lambda}}</code> - Lambda Function</div>
+                        <div class="icon-item"><code>{{ECS}}</code> - ECS Container</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>Storage</h4>
+                        <div class="icon-item"><code>{{S3}}</code> - S3 Bucket</div>
+                        <div class="icon-item"><code>{{EBS}}</code> - EBS Volume</div>
+                        <div class="icon-item"><code>{{EFS}}</code> - EFS File System</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>Database</h4>
+                        <div class="icon-item"><code>{{RDS}}</code> - RDS Database</div>
+                        <div class="icon-item"><code>{{DynamoDB}}</code> - DynamoDB</div>
+                        <div class="icon-item"><code>{{ElastiCache}}</code> - ElastiCache</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>Networking</h4>
+                        <div class="icon-item"><code>{{VPC}}</code> - VPC</div>
+                        <div class="icon-item"><code>{{ALB}}</code> - Load Balancer</div>
+                        <div class="icon-item"><code>{{CloudFront}}</code> - CloudFront</div>
+                        <div class="icon-item"><code>{{Route53}}</code> - Route 53</div>
+                        <div class="icon-item"><code>{{APIGateway}}</code> - API Gateway</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>Security</h4>
+                        <div class="icon-item"><code>{{IAM}}</code> - IAM</div>
+                        <div class="icon-item"><code>{{WAF}}</code> - WAF</div>
+                        <div class="icon-item"><code>{{KMS}}</code> - KMS</div>
+                    </div>
+                    <div class="icon-category">
+                        <h4>General</h4>
+                        <div class="icon-item"><code>{{User}}</code> - User</div>
+                        <div class="icon-item"><code>{{Internet}}</code> - Internet</div>
+                    </div>
+                </div>
+                <div class="usage-example">
+                    <h4>Usage Example:</h4>
+                    <pre><code>graph TD
+    {{User}} --> {{Route53}}
+    {{Route53}} --> {{CloudFront}}
+    {{CloudFront}} --> {{ALB}}
+    {{ALB}} --> {{EC2}}
+    {{EC2}} --> {{RDS}}</code></pre>
                 </div>
             </div>
         </div>
