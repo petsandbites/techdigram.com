@@ -12,7 +12,25 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>☁️ Diagram Editor</h1>
+            <h1>☁️ AI-Powered Diagram Editor</h1>
+            <div class="api-key-section">
+                <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Enter your Google Gemini API key (AIza...)">
+                <i class="fas fa-info-circle info-icon" id="infoIcon" title="How to get API key"></i>
+                <span id="apiStatus" class="api-status">No API key</span>
+            </div>
+        </div>
+        
+        <div class="ai-panel" id="aiPanel">
+            <div class="ai-prompt-container">
+                <textarea id="aiPromptInput" class="ai-prompt-input" placeholder="Describe how you want to modify your diagram (e.g., 'Add a Redis cache between the load balancer and EC2', 'Convert this to use Lambda functions instead of EC2')..."></textarea>
+                <button id="aiSendBtn" class="ai-send-btn" disabled>Ask AI</button>
+            </div>
+            <div id="aiResponse" class="ai-response">
+                <div id="aiResponseText" class="ai-response-text"></div>
+                <div class="ai-actions">
+                    <button id="applyBtn" class="apply-btn">Apply Changes</button>
+                </div>
+            </div>
         </div>
         
         <div class="editor-container">
@@ -60,6 +78,39 @@
                 <div id="mermaidOutput" class="mermaid-output">
                     <div class="loading">Loading diagram...</div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Popup -->
+    <div class="popup-overlay" id="popupOverlay"></div>
+    <div class="instructions-popup" id="instructionsPopup">
+        <div class="popup-header">
+            <h3 class="popup-title">How to Get Google Gemini API Key</h3>
+            <button class="close-btn" id="closePopup">&times;</button>
+        </div>
+        <div class="popup-content">
+            <h4>Step-by-Step Instructions:</h4>
+            <ol>
+                <li>Go to <strong>Google AI Studio</strong>: <code>https://makersuite.google.com/app/apikey</code></li>
+                <li>Sign in with your Google account</li>
+                <li>Click <strong>"Create API Key"</strong></li>
+                <li>Choose <strong>"Create API key in new project"</strong> (recommended)</li>
+                <li>Copy the generated API key (starts with <code>AIza</code>)</li>
+                <li>Paste it into the API key field above</li>
+            </ol>
+            
+            <h4>Enable the API:</h4>
+            <ol>
+                <li>Go to <strong>Google Cloud Console</strong>: <code>https://console.cloud.google.com/</code></li>
+                <li>Select your project (or create one)</li>
+                <li>Go to <strong>APIs & Services > Library</strong></li>
+                <li>Search for <strong>"Generative Language API"</strong></li>
+                <li>Click on it and press <strong>"Enable"</strong></li>
+            </ol>
+            
+            <div class="warning">
+                <strong>Note:</strong> The API key must have the Generative Language API enabled to work. If you get a 404 error, make sure you've enabled the API in Google Cloud Console.
             </div>
         </div>
     </div>

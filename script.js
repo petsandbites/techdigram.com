@@ -24,6 +24,25 @@ const output = document.getElementById('mermaidOutput');
 const clearBtn = document.getElementById('clearBtn');
 const templateBtns = document.querySelectorAll('.template-btn');
 
+// AI Elements
+const apiKeyInput = document.getElementById('apiKeyInput');
+const apiStatus = document.getElementById('apiStatus');
+const aiPanel = document.getElementById('aiPanel');
+const aiPromptInput = document.getElementById('aiPromptInput');
+const aiSendBtn = document.getElementById('aiSendBtn');
+const aiResponse = document.getElementById('aiResponse');
+const aiResponseText = document.getElementById('aiResponseText');
+const applyBtn = document.getElementById('applyBtn');
+
+// Popup elements
+const infoIcon = document.getElementById('infoIcon');
+const popupOverlay = document.getElementById('popupOverlay');
+const instructionsPopup = document.getElementById('instructionsPopup');
+const closePopup = document.getElementById('closePopup');
+
+let currentApiKey = '';
+let lastAiResponse = '';
+
 // AWS Architecture Templates with Font Awesome icons
 const templates = {
     basic: `graph TD
@@ -157,3 +176,149 @@ input.addEventListener('keydown', (e) => {
         renderDiagram(input.value);
     }
 });
+
+// API Key Management
+apiKeyInput.addEventListener('input', (e) => {
+    currentApiKey = e.target.value.trim();
+    updateApiStatus();
+});
+
+function updateApiStatus() {
+    if (!currentApiKey) {
+        apiStatus.textContent = 'No API key';
+        apiStatus.style.background = 'rgba(231, 76, 60, 0.2)';
+        aiSendBtn.disabled = true;
+        aiPanel.classList.remove('active');
+    } else if (currentApiKey.startsWith('AIza')) {
+        apiStatus.textContent = 'API key valid';
+        apiStatus.style.background = 'rgba(39, 174, 96, 0.2)';
+        aiSendBtn.disabled = false;
+        aiPanel.classList.add('active');
+    } else {
+        apiStatus.textContent = 'Invalid format (should start with AIza)';
+        apiStatus.style.background = 'rgba(243, 156, 18, 0.2)';
+        aiSendBtn.disabled = true;
+        aiPanel.classList.remove('active');
+    }
+}
+
+// AI Integration with Google Gemini
+async function callGemini(prompt, currentCode) {
+    const systemPrompt = `You are an expert at creating and modifying Mermaid diagrams, especially AWS architecture diagrams. 
+
+The user has a current Mermaid diagram and wants to modify it. Please:
+1. Analyze their current diagram
+2. Understand their modification request
+3. Generate the updated Mermaid code
+4. Use Font Awesome icons in the format: ["<i class='fas fa-icon-name'></i><br/>Service Name"]
+5. Keep AWS services properly organized in subgraphs when appropriate
+
+Respond with ONLY the updated Mermaid code, no explanations or markdown formatting.`;
+    
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${currentApiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: `${systemPrompt}\n\nCurrent diagram:\n${currentCode}\n\nModification request: ${prompt}`
+                    }]
+                }],
+                generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 1000
+                }
+            })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        return data.candidates[0].content.parts[0].text.trim();
+    } catch (error) {
+        if (error.message.includes('quota') || error.message.includes('billing')) {
+            throw new Error('Google API quota exceeded. Please check your billing at https://console.cloud.google.com/billing or try a different API key.');
+        } else if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            throw new Error('Invalid API key. Please check your Google API key.');
+        } else if (error.message.includes('429')) {
+            throw new Error('Rate limit exceeded. Please wait a moment and try again.');
+        } else {
+            throw new Error(`Google API Error: ${error.message}`);
+        }
+    }
+}
+
+// AI Send Button Handler
+aiSendBtn.addEventListener('click', async () => {
+    const prompt = aiPromptInput.value.trim();
+    if (!prompt) return;
+    
+    aiSendBtn.disabled = true;
+    aiSendBtn.innerHTML = '<div class="loading-spinner"></div>Thinking...';
+    aiResponse.classList.remove('active');
+    
+    try {
+        const currentCode = input.value;
+        const updatedCode = await callGemini(prompt, currentCode);
+        
+        lastAiResponse = updatedCode;
+        aiResponseText.textContent = `AI suggests this updated diagram:\n\n${updatedCode}`;
+        aiResponse.classList.add('active');
+        
+    } catch (error) {
+        let errorMessage = error.message;
+        if (error.message.includes('quota')) {
+            errorMessage += '\n\nAlternatives:\n• Check your Google Cloud billing\n• Use a different API key\n• Try the manual templates above';
+        }
+        aiResponseText.textContent = `Error: ${errorMessage}`;
+        aiResponse.classList.add('active');
+    } finally {
+        aiSendBtn.disabled = false;
+        aiSendBtn.textContent = 'Ask AI';
+    }
+});
+
+// Apply Changes Button
+applyBtn.addEventListener('click', () => {
+    if (lastAiResponse) {
+        input.value = lastAiResponse;
+        renderDiagram(lastAiResponse);
+        aiPromptInput.value = '';
+        aiResponse.classList.remove('active');
+    }
+});
+
+// Enter key in AI prompt
+aiPromptInput.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!aiSendBtn.disabled) {
+            aiSendBtn.click();
+        }
+    }
+});
+
+// Popup functionality
+infoIcon.addEventListener('click', () => {
+    popupOverlay.classList.add('active');
+    instructionsPopup.classList.add('active');
+});
+
+closePopup.addEventListener('click', () => {
+    popupOverlay.classList.remove('active');
+    instructionsPopup.classList.remove('active');
+});
+
+popupOverlay.addEventListener('click', () => {
+    popupOverlay.classList.remove('active');
+    instructionsPopup.classList.remove('active');
+});
+
+// Initialize API status
+updateApiStatus();
