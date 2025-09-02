@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mermaid Diagram Editor</title>
+    <title>AWS Architecture Diagram Editor</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/simple-icons@v9/icons/amazonaws.js"></script>
     <style>
         * {
             margin: 0;
@@ -108,6 +110,59 @@
             background: #c0392b;
         }
 
+        .template-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .template-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: background 0.2s;
+        }
+
+        .template-btn:hover {
+            background: #2980b9;
+        }
+
+        .input-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .aws-guide {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 20px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .aws-guide h4 {
+            margin: 0 0 8px 0;
+            color: #856404;
+        }
+
+        .aws-guide code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
         .mermaid-output {
             flex: 1;
             padding: 20px;
@@ -151,28 +206,71 @@
             max-width: 100%;
             height: auto;
         }
+        
+        /* AWS icon styling in diagrams */
+        .mermaid .node rect,
+        .mermaid .node circle,
+        .mermaid .node ellipse,
+        .mermaid .node polygon {
+            stroke: #FF9900;
+            stroke-width: 2px;
+        }
+        
+        .mermaid .node .label i {
+            color: #FF9900;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+        
+        .mermaid .cluster rect {
+            fill: #f8f9fa;
+            stroke: #232F3E;
+            stroke-width: 2px;
+            stroke-dasharray: 5,5;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🧜‍♀️ Mermaid Diagram Editor</h1>
+            <h1>☁️ Diagram Editor</h1>
         </div>
         
         <div class="editor-container">
             <div class="input-panel">
                 <div class="input-header">
-                    Mermaid Code
+                    <span>Code</span>
+                    <div class="template-buttons">
+                        <button class="template-btn" data-template="basic">Basic Flow</button>
+                        <button class="template-btn" data-template="lambda">Lambda@Edge</button>
+                        <button class="template-btn" data-template="microservices">Microservices</button>
+                    </div>
+                </div>
+                <div class="aws-guide">
+                    <h4>Icons Guide:</h4>
+                    <strong>Compute:</strong> <i class="fab fa-aws"></i> EC2 <i class="fas fa-bolt"></i> Lambda <i class="fab fa-docker"></i> ECS <i class="fas fa-dharmachakra"></i> EKS<br>
+                    <strong>Storage:</strong> <i class="fas fa-database"></i> S3 <i class="fas fa-server"></i> RDS <i class="fas fa-table"></i> DynamoDB <i class="fas fa-folder"></i> EFS<br>
+                    <strong>Network:</strong> <i class="fas fa-cloud"></i> CloudFront <i class="fas fa-balance-scale"></i> ALB <i class="fas fa-globe"></i> Route53 <i class="fas fa-shield-alt"></i> VPC<br>
+                    <strong>Security:</strong> <i class="fas fa-user-shield"></i> IAM <i class="fas fa-key"></i> Cognito <i class="fas fa-lock"></i> KMS <i class="fas fa-shield-alt"></i> WAF
                 </div>
                 <textarea 
                     id="mermaidInput" 
                     class="mermaid-input" 
-                    placeholder="Enter your Mermaid diagram code here...">graph TD
-    A[Start] --> B{Is it working?}
-    B -->|Yes| C[Great!]
-    B -->|No| D[Debug]
-    D --> B
-    C --> E[End]</textarea>
+                    placeholder="Enter your AWS architecture code here...">graph TD
+    User["<i class='fas fa-user'></i><br/>User"] --> DNS["<i class='fas fa-globe'></i><br/>Route 53"]
+    DNS --> CF["<i class='fas fa-cloud'></i><br/>CloudFront"]
+    CF --> LE["<i class='fas fa-bolt'></i><br/>Lambda@Edge"]
+    LE --> ALB["<i class='fas fa-balance-scale'></i><br/>Load Balancer"]
+    ALB --> EC2["<i class='fab fa-aws'></i><br/>EC2 Instance"]
+    EC2 --> RDS["<i class='fas fa-server'></i><br/>RDS Database"]
+    
+    subgraph "AWS Cloud"
+        CF
+        LE
+        ALB
+        EC2
+        RDS
+    end</textarea>
             </div>
             
             <div class="output-panel">
@@ -188,18 +286,89 @@
     </div>
 
     <script>
-        // Initialize Mermaid
+        // Initialize Mermaid with AWS-friendly theme and HTML support
         mermaid.initialize({
             startOnLoad: false,
-            theme: 'default',
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#FF9900',
+                primaryTextColor: '#232F3E',
+                primaryBorderColor: '#FF9900',
+                lineColor: '#232F3E',
+                secondaryColor: '#232F3E',
+                tertiaryColor: '#fff'
+            },
             securityLevel: 'loose',
             fontFamily: 'arial',
-            fontSize: 14
+            fontSize: 14,
+            htmlLabels: true,
+            flowchart: {
+                htmlLabels: true
+            }
         });
 
         const input = document.getElementById('mermaidInput');
         const output = document.getElementById('mermaidOutput');
         const clearBtn = document.getElementById('clearBtn');
+        const templateBtns = document.querySelectorAll('.template-btn');
+        
+        // AWS Architecture Templates with Font Awesome icons
+        const templates = {
+            basic: `graph TD
+    User["<i class='fas fa-user'></i><br/>User"] --> CF["<i class='fas fa-cloud'></i><br/>CloudFront"]
+    CF --> ALB["<i class='fas fa-balance-scale'></i><br/>Load Balancer"]
+    ALB --> EC2["<i class='fab fa-aws'></i><br/>EC2 Instance"]
+    EC2 --> RDS["<i class='fas fa-server'></i><br/>RDS Database"]
+    
+    subgraph "AWS Cloud"
+        CF
+        ALB
+        EC2
+        RDS
+    end`,
+            lambda: `graph TD
+    User["<i class='fas fa-user'></i><br/>User"] --> DNS["<i class='fas fa-globe'></i><br/>Route 53"]
+    DNS --> CF["<i class='fas fa-cloud'></i><br/>CloudFront"]
+    CF --> LE["<i class='fas fa-bolt'></i><br/>Lambda@Edge"]
+    LE --> Origin["<i class='fas fa-server'></i><br/>Origin Server"]
+    
+    subgraph "Config Sources"
+        S3["<i class='fas fa-database'></i><br/>S3 Bucket"]
+        CFConfig["<i class='fas fa-cloud'></i><br/>CloudFront Config"]
+    end
+    
+    LE --> S3
+    LE --> CFConfig`,
+            microservices: `graph TD
+    User["<i class='fas fa-user'></i><br/>User"] --> API["<i class='fas fa-plug'></i><br/>API Gateway"]
+    API --> Auth["<i class='fas fa-key'></i><br/>Cognito"]
+    Auth --> ALB["<i class='fas fa-balance-scale'></i><br/>Load Balancer"]
+    
+    ALB --> UserService["<i class='fas fa-bolt'></i><br/>User Service<br/>(Lambda)"]
+    ALB --> OrderService["<i class='fas fa-bolt'></i><br/>Order Service<br/>(Lambda)"]
+    ALB --> PaymentService["<i class='fas fa-bolt'></i><br/>Payment Service<br/>(Lambda)"]
+    
+    UserService --> UserDB["<i class='fas fa-table'></i><br/>DynamoDB<br/>Users"]
+    OrderService --> OrderDB["<i class='fas fa-table'></i><br/>DynamoDB<br/>Orders"]
+    PaymentService --> PaymentDB["<i class='fas fa-server'></i><br/>RDS<br/>Payments"]
+    
+    OrderService --> SQS["<i class='fas fa-envelope'></i><br/>SQS Queue"]
+    SQS --> NotificationService["<i class='fas fa-bolt'></i><br/>Notification<br/>Service"]
+    
+    subgraph "AWS Cloud"
+        API
+        Auth
+        ALB
+        UserService
+        OrderService
+        PaymentService
+        UserDB
+        OrderDB
+        PaymentDB
+        SQS
+        NotificationService
+    end`
+        };
         
         let renderTimeout;
         let diagramCounter = 0;
@@ -243,6 +412,17 @@
             }, 500); // 500ms delay to avoid too frequent updates
         }
 
+        // Template button handlers
+        templateBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const template = btn.dataset.template;
+                if (templates[template]) {
+                    input.value = templates[template];
+                    renderDiagram(input.value);
+                }
+            });
+        });
+        
         // Event listeners
         input.addEventListener('input', handleInput);
         input.addEventListener('paste', handleInput);
